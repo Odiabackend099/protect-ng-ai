@@ -2,10 +2,10 @@
   "version": 2,
   "name": "protect-ng-crossai",
   "routes": [
-    { "src": "^/api/(.*)$", "dest": "/api/$1" },
-    { "src": "^(?!/api)(.*)$", "dest": "/index.html" }
+    { "src": "/api/(.*)", "dest": "/api/$1" },
+    { "src": "/(.*)", "dest": "/$1" }
   ],
   "functions": {
-    "api/**/*.js": { "runtime": "@vercel/node@3" }
+    "api/**/*.js": { "runtime": "nodejs20.x" }
   }
 }
