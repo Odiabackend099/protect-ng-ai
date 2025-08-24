@@ -1,0 +1,13 @@
+project_id = "qvvsuhzvcjnuvkteygpc"
+
+[functions.speech-to-text]
+verify_jwt = false
+
+[functions.text-to-speech]
+verify_jwt = false
+
+[functions.emergency-classify]
+verify_jwt = false
+
+[functions.log-emergency]
+verify_jwt = false
