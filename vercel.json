@@ -1,1 +1,10 @@
-﻿@{ "version": 2, "ignoreBuildStep": true, "functions": { "api/**/*.js": { "runtime": "nodejs20.x" } } }
+﻿{
+  "version": 2,
+  "routes": [
+    { "src": "/api/(.*)", "dest": "/api/$1" },
+    { "src": "/(.*)", "dest": "/$1" }
+  ],
+  "functions": {
+    "api/**/*.js": { "runtime": "@vercel/node" }
+  }
+}

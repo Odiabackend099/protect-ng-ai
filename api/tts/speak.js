@@ -1,66 +1,18 @@
-﻿// api/tts/speak.js - Nigerian TTS proxy endpoint
-export default async function handler(req, res) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-  
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
-  }
-
+﻿export default async function handler(req, res) {
   try {
-    const ttsUrl = process.env.TTS_BASE_URL || "https://odiadev-tts-plug-n-play.onrender.com";
-    const apiKey = process.env.TTS_API_KEY || "";
     const url = new URL(req.url, `http://${req.headers.host}`);
-    
     const text = (url.searchParams.get("text") || "").slice(0, 500);
     const voice = url.searchParams.get("voice") || "nigerian-female";
-    
-    if (!text) {
-      return res.status(400).json({
-        error: "Text parameter required",
-        example: "/api/tts/speak?text=Hello&voice=nigerian-female"
-      });
-    }
+    if (!text) { res.status(400).json({ error: "text required" }); return; }
 
-    console.log(` TTS Request: "${text}" with voice: ${voice}`);
+    const base = process.env.TTS_BASE_URL || "https://odiadev-tts-plug-n-play.onrender.com";
+    const rr = await fetch(`${base}/speak?text=${encodeURIComponent(text)}&voice=${encodeURIComponent(voice)}`);
+    const buf = Buffer.from(await rr.arrayBuffer());
 
-    const ttsResponse = await fetch(
-      `${ttsUrl}/speak?text=${encodeURIComponent(text)}&voice=${encodeURIComponent(voice)}`,
-      {
-        headers: {
-          'User-Agent': 'Protect.NG-TTS-Proxy/2.0',
-          ...(apiKey && { 'x-api-key': apiKey })
-        },
-        signal: AbortSignal.timeout ? AbortSignal.timeout(30000) : undefined
-      }
-    );
-
-    if (!ttsResponse.ok) {
-      console.log(` TTS Error: ${ttsResponse.status}`);
-      return res.status(ttsResponse.status).json({
-        error: "TTS service error",
-        status: ttsResponse.status,
-        message: await ttsResponse.text()
-      });
-    }
-
-    const audioBuffer = Buffer.from(await ttsResponse.arrayBuffer());
-    
-    res.setHeader("Content-Type", ttsResponse.headers.get("content-type") || "audio/wav");
-    res.setHeader("Content-Length", audioBuffer.length);
-    res.setHeader("Cache-Control", "public, max-age=300");
-    
-    console.log(` TTS Success: ${audioBuffer.length} bytes`);
-    res.status(200).send(audioBuffer);
-    
-  } catch (error) {
-    console.error("TTS Error:", error);
-    res.status(500).json({
-      error: "TTS generation failed",
-      message: error.message,
-      timestamp: new Date().toISOString()
-    });
+    res.setHeader("content-type", rr.headers.get("content-type") || "audio/wav");
+    res.setHeader("cache-control", "no-store");
+    res.status(rr.ok ? 200 : rr.status).send(buf);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
   }
 }
